@@ -3,6 +3,14 @@ import tvmaze
 
 
 class MyTestCase(unittest.TestCase):
+    def test_search_show_not_found(self):
+        result = tvmaze.find_shows("a non existent show")
+        self.assertEqual(len(result), 0,  "Should be an empty list!")
+
+    def test_search_show_found(self):
+        result = tvmaze.find_shows("girls")
+        self.assertIsNotNone(result, "Exptected a populated list")
+
     def test_singlesearch_show_not_found(self):
         result = tvmaze.single_search("a non existent show")
         self.assertIsNone(result, "Should be none, got %s" % type(result))
@@ -39,9 +47,18 @@ class MyTestCase(unittest.TestCase):
     def test_get_number_of_seasons(self):
         result = tvmaze.get_episodes(tvmaze.get_show_id("buffy"))
         self.assertGreaterEqual(
-            tvmaze.get_total_seasons(tvmaze.get_show_id("buffy")), 7,
+            tvmaze.get_seasons_number(tvmaze.get_show_id("buffy")), 7,
                 "The Buffy show has 7 seasons"
             )
+
+    def test_get_shows_found_something(self):
+        result = tvmaze.get_shows("girls")
+        self.assertGreater(result, 0, "Expected a populated list!")
+
+    def test_get_shows_found_nothing(self):
+        result = tvmaze.get_shows("nonexistent")
+        self.assertEqual(len(result), 0, "Expected a populated list!")
+
 
 
 if __name__ == '__main__':

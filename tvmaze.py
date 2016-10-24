@@ -1,34 +1,50 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__doc__ = """Wrapper interface to the TV Maze API
-"""
-
 import requests
 import json
 
+__doc__ = """Python interface to the TV Maze API
+
+It's a simple one, to retrieve some info only about shows and episodes such as
+
+- Show Name
+- Number of seasons
+- Episodes (each episode has)
+    - Number
+    - Title
+    - Season show
+
+"""
+__version__ = '0.1'
 
 TVMAZE_API = {
     'root': r'http://api.tvmaze.com/',
+    'search': r'search/shows',
     'single_search': r'singlesearch/shows',
     'show_info': r'shows',
     'show_episode_list': 'shows/%d/episodes'
 }
 
+
 class TVMazeException(Exception):
+    """Custon exception"""
     pass
+
 
 def _set_query(qtype):
     """(str) -> str
 
-    Return the type of REST url to request
+    Compose the REST url to request, according to `qtype`, returns None if
+    `qtype` is not found
     """
     if qtype not in TVMAZE_API:
         return None
     return "%s%s" % (TVMAZE_API['root'], TVMAZE_API[qtype])
 
+
 def _set_request(url, parms=None):
-    """(str [,dict]
+    """(str [,dict]) -> JSON string or None
 
     Execute a REST request with `url` and optionals parameters `parms`
     Returns None or the JSON object from the request
@@ -40,8 +56,24 @@ def _set_request(url, parms=None):
         r = requests.get(url)
     return r.json() if r else None
 
+
+def find_shows(query):
+    """(str) -> JSON or none
+
+    From the TVMaze API docs: Search through all the shows in our database
+    by the show's name. A fuzzy algorithm is used (with a fuzziness value of 2),
+    meaning that shows will be found even if your query contains small typos.
+    Results are returned in order of relevancy (best matches on top) and
+    contain each show's full information
+
+    """
+    url = _set_query('search')
+    parms = {'q': query}
+    return _set_request(url, parms)
+
+
 def single_search(query):
-    """(str) -> json or None
+    """(str) -> JSON string or None
 
     Performs a search for a show with query as name (forgiving for typos)
     """
@@ -49,13 +81,32 @@ def single_search(query):
     parms = {'q': query}
     return _set_request(url, parms)
 
+
+def get_shows(query):
+    """(str) -> list of tuples with show id and name
+
+    Discards all the informations and returns a list of show ids and names.
+    It's up to the caller to eventually pick a specific entry.
+
+    Returns an empty list if nothing is found
+    """
+    results = find_shows(query)
+    if not results:
+        return []
+    retval = []
+    for result in results:
+        retval.append((result['show']['id'], result['show']['name']))
+    return retval
+
+
 def get_show_id(query):
-    """(str) -> id
+    """(str) -> int
 
     Returns the show id from a **single_search** query
     """
     show = single_search(query)
     return show['id'] if show else -1
+
 
 def get_episodes(show_id, seasons=()):
     """(int [,seasons) -> list of dict
@@ -79,9 +130,14 @@ def get_episodes(show_id, seasons=()):
         )
     return result
 
-def get_total_seasons(show_id):
+
+def get_seasons_number(show_id):
+    """(int) -> int
+
+    Returns the number of season for the show with id `show_id`
+    """
     eps = get_episodes(show_id)
     if not eps:
         raise TVMazeException("Show id %d not found" % show_id)
-    x = max([item['season'] for item in eps])
-    return x
+    return max([item['season'] for item in eps])
+
