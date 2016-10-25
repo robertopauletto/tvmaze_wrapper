@@ -6,7 +6,9 @@ import json
 
 __doc__ = """Python interface to the TV Maze API
 
-It's a simple one, to retrieve some info only about shows and episodes such as
+This interface returns always JSON objects exept for the convenience method
+`get_episodes_short` which retrieves some info only about shows and episodes
+such as
 
 - Show Name
 - Number of seasons
@@ -22,7 +24,7 @@ TVMAZE_API = {
     'root': r'http://api.tvmaze.com/',
     'search': r'search/shows',
     'single_search': r'singlesearch/shows',
-    'show_info': r'shows',
+    'show_info': r'shows/',
     'show_episode_list': 'shows/%d/episodes'
 }
 
@@ -108,15 +110,26 @@ def get_show_id(query):
     return show['id'] if show else -1
 
 
-def get_episodes(show_id, seasons=()):
-    """(int [,seasons) -> list of dict
+def get_show(show_id):
+    """Return info about the show with `show_id`"""
+    url = _set_query('show_info') + str(show_id)
+    show = _set_request(url)
+    return show
 
-    Returns basic episode info for the show with `show_id` such as name,
-    season number, episode number.
+
+def get_show_and_episodes_short(show_id, seasons=()):
+    """(int [,seasons) -> (dict, list of dict)
+
+    Returns basic info for the show (name) and episodes with `show_id` such as
+    name, season number, episode number.
+
     `seasons` could be a tuple with the season number for which we want
     episodes.
     If `show_id` does not exists returns an empty list
     """
+    show = get_show(show_id)
+    if not show:
+        return (None, [])
     url = _set_query('show_episode_list') % show_id
     r = _set_request(url)
     if not r:
@@ -128,7 +141,7 @@ def get_episodes(show_id, seasons=()):
         result.append(
             {'name': ep['name'], 'number': ep['number'], 'season': ep['season']}
         )
-    return result
+    return (show['name'], result)
 
 
 def get_seasons_number(show_id):
@@ -136,8 +149,9 @@ def get_seasons_number(show_id):
 
     Returns the number of season for the show with id `show_id`
     """
-    eps = get_episodes(show_id)
+    show_name, eps = get_show_and_episodes_short(show_id)
     if not eps:
         raise TVMazeException("Show id %d not found" % show_id)
     return max([item['season'] for item in eps])
+
 
