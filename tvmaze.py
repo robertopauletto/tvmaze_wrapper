@@ -6,9 +6,9 @@ import json
 
 __doc__ = """Python interface to the TV Maze API
 
-This interface returns always JSON objects exept for the convenience method
-`get_episodes_short` which retrieves some info only about shows and episodes
-such as
+This interface returns always JSON objects except for the convenience method
+`get_show_and_episodes_short` which retrieves some info only about shows and
+episodes such as
 
 - Show Name
 - Number of seasons
