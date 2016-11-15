@@ -37,21 +37,21 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(result, 73, "Expected 73")
 
     def test_get_show_and_episodes_short_show_id_not_found(self):
-        show_name, episodes = tvmaze.get_show_and_episodes_short(
+        show_id, show_name, episodes = tvmaze.get_show_and_episodes_short(
             tvmaze.get_show_id("a non existent show")
         )
         self.assertIsNone(show_name, "If show not found should be None")
         self.assertEqual(len(episodes), 0, "Should be an empty list")
 
     def test_get_show_and_episodes_short_show_id_found(self):
-        show_name, episodes = tvmaze.get_show_and_episodes_short(
+        show_id, show_name, episodes = tvmaze.get_show_and_episodes_short(
             tvmaze.get_show_id("walking dead")
         )
         self.assertTrue('walking dead' in show_name.lower())
         self.assertGreater(len(episodes), 0, "Expected a populated list")
 
     def test_get_episodes_show_id_found_selected_seasons(self):
-        show_name, episodes = tvmaze.get_show_and_episodes_short(
+        show_id, show_name, episodes = tvmaze.get_show_and_episodes_short(
             tvmaze.get_show_id("walking dead"), (2,)
         )
         test = 2

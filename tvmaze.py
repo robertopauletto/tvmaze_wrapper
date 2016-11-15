@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import requests
-import json
+try:
+    import requests
+    import json
+except ImportError as ie:
+    print "Some module is missing:\n" + ie
 
 __doc__ = """Python interface to the TV Maze API
 
@@ -16,6 +19,25 @@ episodes such as
     - Number
     - Title
     - Season show
+
+Use single_search if you are pretty sure of the name of the show you are
+looking for (e.g. single_search('buffy')
+
+Use get_shows if you want to retrieve a number of possible matches to process
+to get the show you actually want; for example
+
+get_shows('girls') will gives you
+
+000139 Girls
+000525 Gilmore Girls
+006771 The Powerpuff Girls
+022131 Brown Girls
+009136 Funny Girls
+000722 The Golden Girls
+021949 Kaiju Girls
+000911 Some Girls
+003418 ANZAC Girls
+013826 Soldier Girls
 
 """
 __version__ = '0.1'
@@ -77,7 +99,9 @@ def find_shows(query):
 def single_search(query):
     """(str) -> JSON string or None
 
-    Performs a search for a show with query as name (forgiving for typos)
+    Performs a search for a show with query as name (forgiving for typos).
+    Use it if you are sure that the search for `query` will return only one
+    show
     """
     url = _set_query('single_search')
     parms = {'q': query}
@@ -118,22 +142,27 @@ def get_show(show_id):
 
 
 def get_show_and_episodes_short(show_id, seasons=()):
-    """(int [,seasons) -> (dict, list of dict)
-
-    Returns basic info for the show (name) and episodes with `show_id` such as
-    name, season number, episode number.
+    """(int [,seasons) -> (list of tuple)
 
     `seasons` could be a tuple with the season number for which we want
     episodes.
-    If `show_id` does not exists returns an empty list
+
+    If `show_id` does not exists returns None and an empty list
+
+    :param show_id:
+    :param seasons:
+    :return: list of tuple with:
+    - serie_id
+    - serie name
+    - dict with basic info for the episodes: name, season and episode number
     """
     show = get_show(show_id)
     if not show:
-        return (None, [])
+        return -1, None, []
     url = _set_query('show_episode_list') % show_id
     r = _set_request(url)
     if not r:
-        return []
+        return -1, None, []
     result = []
     for ep in r:
         if seasons and ep['season'] not in seasons:
@@ -141,7 +170,7 @@ def get_show_and_episodes_short(show_id, seasons=()):
         result.append(
             {'name': ep['name'], 'number': ep['number'], 'season': ep['season']}
         )
-    return (show['name'], result)
+    return show_id, show['name'], result
 
 
 def get_seasons_number(show_id):
@@ -149,9 +178,15 @@ def get_seasons_number(show_id):
 
     Returns the number of season for the show with id `show_id`
     """
-    show_name, eps = get_show_and_episodes_short(show_id)
+    show_id, show_name, eps = get_show_and_episodes_short(show_id)
     if not eps:
         raise TVMazeException("Show id %d not found" % show_id)
     return max([item['season'] for item in eps])
 
 
+if __name__ == '__main__':
+    test_show = 'big bang theory'
+    show_id = get_show_id(test_show)
+    if show_id:
+        print get_show_and_episodes_short(show_id)
+    # print "\n".join([str(item[0]).zfill(6) + " " + item[1] for item in get_shows('girls')])
