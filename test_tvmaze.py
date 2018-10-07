@@ -1,10 +1,10 @@
 # test_tv_maze
 
 from unittest import TestCase
-import tvs4.tv_maze.tvmaze as tvm
+import tvmaze as tvm
 
 __doc__ = """test_tv_maze"""
-__version__ = "0.2"
+__version__ = "0.1"
 __changelog__ = """
 
 """
@@ -14,11 +14,19 @@ if __name__ == '__main__':
 
 
 class TestTvMaze(TestCase):
+    TEST_SHOW_ID = 66  # Big bang theory
+    TEST_EPISODE = 'The Bat Jar Conjecture'
 
     def setUp(self):
         self.show_unique = 'the big bang theory'
         self.show_multiple = 'girls'
         self.test_route = r'http://api.tvmaze.com/search/shows'
+
+    def _check_episode_list(self, episodes):
+        for episode in episodes:
+            if episode['name'].lower() == TestTvMaze.TEST_EPISODE.lower():
+                return True
+        return False
 
     def _show_name_all_occurrenes(self, r, tosearch):
         for item in r:
@@ -64,7 +72,8 @@ class TestTvMaze(TestCase):
         self.assertTrue(tvm.get_show_id(not_a_show), -1)
 
     def test_get_show_id_found(self):
-        self.assertTrue(tvm.get_show_id(self.show_unique), 66)
+        self.assertTrue(tvm.get_show_id(self.show_unique),
+                        TestTvMaze.TEST_SHOW_ID)
 
     def test_get_show_by_id_ko(self):
         not_valid_id = '123123123123123123'
@@ -77,8 +86,7 @@ class TestTvMaze(TestCase):
         self.assertTrue(r['name'].lower() == 'the big bang theory')
 
     def test_get_show_image_medium_ok(self):
-        r = tvm.get_show_image(66, tvm.ImgType.medium)
-        print(r)
+        r = tvm.get_show_image(TestTvMaze.TEST_SHOW_ID, tvm.ImgType.medium)
         self.assertTrue(r is not None)
 
     def test_get_show_status_not_a_show(self):
@@ -86,15 +94,35 @@ class TestTvMaze(TestCase):
         self.assertEqual(tvm.get_show_status(not_valid_id), None)
 
     def test_get_show_status_ok(self):
-        self.assertTrue(tvm.get_show_status(66).lower() in ('ended', 'running'))
+        self.assertTrue(
+            tvm.get_show_status(TestTvMaze.TEST_SHOW_ID).lower()
+            in ('ended', 'running'))
 
     def test_is_running_show_true(self):
         """Careful, ckeck if show_id is actually running, otherwise the test
         will fail"""
         # 66 = the big bang theory
-        self.assertTrue(tvm.is_a_running_show(66))
+        self.assertTrue(tvm.is_a_running_show(TestTvMaze.TEST_SHOW_ID))
 
     def test_is_running_show_false(self):
         # 1 = under the dome
         self.assertFalse(tvm.is_a_running_show(1))
+
+    def test_get_show_and_episodes_all_seasons(self):
+        show_id, show_name, episodes = tvm.get_show_and_episodes_short(
+            TestTvMaze.TEST_SHOW_ID)
+        self.assertTrue(self._check_episode_list(episodes))
+
+    def test_get_show_and_episodes_filter_seasons(self):
+        seasons = (1, 3, 6)
+        show_id, show_name, episodes = tvm.get_show_and_episodes_short(
+            TestTvMaze.TEST_SHOW_ID, seasons)
+
+        self.assertTrue(all(eps['season'] for eps in episodes
+                            if eps['season'] in seasons))
+
+    def test_get_number_of_seasons(self):
+        show_id = 1  # Under the Dome - 3 seasons - show ended
+        self.assertEqual(tvm.get_number_of_seasons(show_id), 3, "Should be 3")
+
 

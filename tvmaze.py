@@ -6,7 +6,7 @@ try:
     import requests
     import json
 except ImportError as ie:
-    print("Some modules are missing:\n")
+    print(f"Some modules are missing:\n{ie}")
 
 __doc__ = """Python interface to the TV Maze API
 
@@ -43,7 +43,10 @@ matches to process to get the show you actually want, for example:
 """
 __version__ = '0.3'
 __changelog__ = """
-
+october 2018: Porting to Python3 (version 3.6 or above)
+              Added methods to check the status of a show and 
+              if the show is currently running
+              Test cases rewritten
 """
 
 
@@ -169,6 +172,7 @@ def get_show_image(show_id, imgtype=ImgType.medium):
     response = requests.get(url, stream=True)
     return response.raw, url
 
+
 def get_show_status(show_id):
     """
     Get the status of the show
@@ -178,6 +182,7 @@ def get_show_status(show_id):
     """
     show = get_show_by_id(show_id)
     return show['status'] if show else None
+
 
 def is_a_running_show(show_id):
     """
@@ -191,23 +196,21 @@ def is_a_running_show(show_id):
     return show['status'].lower() == 'running'
 
 
-
-
 def get_show_and_episodes_short(show_id, seasons=None):
-    """(int [,seasons) -> (list of tuple)
-
-    If `show_id` does not exists returns -1, None and an empty list
+    """
+    Gets the episodes of the show with `show_id`
 
     :param show_id:
     :param seasons: a tuple with the season number for which we want episodes.
-                    empty means we want all seasons
+                    `None` or empty means we want all seasons
     :return: list of tuple with:
-    - serie_id
-    - serie name
-    - list of dict with basic info for the episodes:
-        - name
-        - season
-        - episode number
+             - serie_id
+             - serie name
+             - list of dict with basic info for the episodes:
+                 - name
+                 - season
+                 - episode number
+             If `show_id` does not exists returns -1, None and an empty list
     """
     show = get_show_by_id(show_id)
     if not show:  # Could not found the show with id received!
@@ -233,16 +236,7 @@ def get_number_of_seasons(show_id):
     """
     show_id, show_name, eps = get_show_and_episodes_short(show_id)
     if not eps:
-        raise TVMazeException("Show id %d not found" % show_id)
+        raise TVMazeException(f"Show id {show_id} not found")
     return max([item['season'] for item in eps])
 
-
-if __name__ == '__main__':
-    imgtest = r'/home/robby/ownCloud/code/python/flask_apps/tvseries-4/tvs4/bo'
-    i = get_show_image(155)
-    #test_show = 'big bang theory'
-    #show_id = get_show_id(test_show)
-    #if show_id:
-    #    print(get_show_and_episodes_short(show_id))
-    # print "\n".join([str(item[0]).zfill(6) + " " + item[1] for item in get_shows('girls')])
 
