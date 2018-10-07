@@ -3,7 +3,7 @@
 Python interface to the TV Maze API
 
 This interface always returns JSON objects except for some convenience methods
-, which returns some info about shows and episodes, such as:
+, which return some info about shows and episodes, such as:
 
 - Show Name
 - Number of seasons
@@ -35,7 +35,7 @@ for example:
 013826 Soldier Girls
 ```
 
-For alwost any other method you will need the show id as parameter which you
+For almost any other method you will need the show id as parameter which you
 get from `get_shows()` or `single_search()`
 
 
